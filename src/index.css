@@ -11,3 +11,71 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.dark-mode {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.dark-mode .navbar,
+.dark-mode .stat-card,
+.dark-mode .project-card,
+.dark-mode .task-card,
+.dark-mode .modal-content {
+  background-color: #16213e;
+  border-color: #0f3460;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group textarea,
+.dark-mode .form-group select {
+  background-color: #0f3460;
+  color: #e0e0e0;
+  border-color: #1a1a2e;
+}
+
+.dark-mode .task-column {
+  background-color: #16213e;
+}
+
+.dark-mode .comment-card {
+  background-color: #0f3460;
+}
+
+.dark-mode .notification-dropdown {
+  background-color: #16213e;
+}
+
+.dark-mode {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.dark-mode .navbar,
+.dark-mode .stat-card,
+.dark-mode .project-card,
+.dark-mode .task-card,
+.dark-mode .modal-content {
+  background-color: #16213e;
+  border-color: #0f3460;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group textarea,
+.dark-mode .form-group select {
+  background-color: #0f3460;
+  color: #e0e0e0;
+  border-color: #1a1a2e;
+}
+
+.dark-mode .task-column {
+  background-color: #16213e;
+}
+
+.dark-mode .comment-card {
+  background-color: #0f3460;
+}
+
+.dark-mode .notification-dropdown {
+  background-color: #16213e;
+}

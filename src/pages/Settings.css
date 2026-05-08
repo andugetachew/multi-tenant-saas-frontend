@@ -1,0 +1,62 @@
+.settings-container {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.settings-header {
+    margin-bottom: 30px;
+}
+
+.settings-header h1 {
+    margin: 0;
+    color: #333;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.settings-section p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.disabled-note {
+    font-size: 12px;
+    color: #e53e3e;
+    margin-top: 5px;
+}
+
+.btn-secondary {
+    background: #48bb78;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: auto;
+}
+
+.btn-secondary:hover {
+    background: #38a169;
+}
+
+.invite-message {
+    background: #c6f6d5;
+    color: #22543d;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    text-align: center;
+}

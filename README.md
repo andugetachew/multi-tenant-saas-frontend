@@ -1,70 +1,201 @@
-# Getting Started with Create React App
+ Multi-Tenant SaaS Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React-based enterprise SaaS platform with real-time features, multi-tenant architecture, and comprehensive project management.
 
-## Available Scripts
+## 🚀 Live Demo
+[Coming Soon]
 
-In the project directory, you can run:
+## 📋 Features
 
-### `npm start`
+### Core Features
+- **JWT Authentication** - Secure login/register with token-based auth
+- **Multi-Tenant Architecture** - Organization-based data isolation
+- **Real-time Dashboard** - Live analytics with Chart.js
+- **Project Management** - Create, update, delete projects
+- **Task Management** - Task tracking with status and priority
+- **Nested Comments** - Threaded discussions with replies
+- **Real-time Notifications** - WebSocket-powered instant alerts
+- **Global Search** - Search across projects, tasks, and comments
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Advanced Features
+- **Data Export** - CSV, PDF, and Excel reports
+- **Subscription Management** - Plan upgrades and billing
+- **User Roles** - Admin, Member, Viewer permissions
+- **Activity Logs** - Track all user actions
+- **File Uploads** - Attach files to projects
+- **Analytics Dashboard** - Project trends and completion rates
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Technical Features
+- **WebSocket Connections** - Real-time updates via Daphne
+- **REST API Integration** - Axios HTTP client
+- **Responsive Design** - Mobile-friendly interface
+- **Error Handling** - Comprehensive error boundaries
+- **Loading States** - Skeleton loaders and spinners
 
-### `npm test`
+## 🛠️ Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI Framework |
+| Axios | API Calls |
+| WebSocket | Real-time notifications |
+| Chart.js | Analytics visualizations |
+| React Router | Navigation |
+| CSS Modules | Styling |
 
-### `npm run build`
+## 📦 Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
+- Backend running on `http://localhost:8000`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Setup
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Clone repository
+git clone https://github.com/andugetachew/multi-tenant-saas-frontend.git
+cd multi-tenant-saas-frontend
 
-### `npm run eject`
+# Install dependencies
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Configure environment
+cp .env.example .env
+# Edit .env with your backend URL
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Start development server
+npm start
+Environment Variables
+env
+REACT_APP_API_URL=http://localhost:8000/api
+REACT_APP_WS_URL=ws://localhost:8001
+🔗 Backend Repository
+Multi-Tenant SaaS Backend
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+📁 Project Structure
+text
+src/
+├── components/
+│   ├── Dashboard/
+│   ├── Projects/
+│   ├── Comments/
+│   ├── Notifications/
+│   └── Common/
+├── pages/
+│   ├── Login.jsx
+│   ├── Register.jsx
+│   ├── Dashboard.jsx
+│   └── ProjectDetail.jsx
+├── services/
+│   ├── api.js
+│   └── websocket.js
+├── hooks/
+│   └── useAuth.js
+├── utils/
+│   └── helpers.js
+└── App.jsx
+🚀 API Integration
+Authentication Endpoints
+Method	Endpoint	Description
+POST	/auth/login/	User login
+POST	/auth/register/	New registration
+POST	/auth/logout/	User logout
+Project Endpoints
+Method	Endpoint	Description
+GET	/projects/	List projects
+POST	/projects/	Create project
+PUT	/projects/{id}/	Update project
+DELETE	/projects/{id}/	Delete project
+Real-time WebSocket
+javascript
+// Connect to notifications
+const ws = new WebSocket(`ws://localhost:8001/ws/notifications/?token=${token}`);
+ws.onmessage = (event) => {
+  console.log('Notification:', JSON.parse(event.data));
+};
+🧪 Testing
+bash
+# Run tests
+npm test
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Build for production
+npm run build
+📊 Key Features Demo
+Dashboard Analytics
+Real-time project trends
 
-## Learn More
+Task completion rates
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Active users metrics
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+7-day activity heatmap
 
-### Code Splitting
+Comments System
+Nested replies (infinite depth)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Real-time updates
 
-### Analyzing the Bundle Size
+User mentions
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Edit/delete functionality
 
-### Making a Progressive Web App
+Notifications
+WebSocket real-time alerts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Read/unread status
 
-### Advanced Configuration
+Mark all as read
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Click to navigate
 
-### Deployment
+🤝 Contributing
+Fork the repository
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Create feature branch (git checkout -b feature/AmazingFeature)
 
-### `npm run build` fails to minify
+Commit changes (git commit -m 'Add AmazingFeature')
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Push to branch (git push origin feature/AmazingFeature)
+
+Open Pull Request
+
+📝 License
+MIT License - see LICENSE file
+
+👨‍💻 Author
+Andu Getachew
+
+GitHub: @andugetachew
+
+🙏 Acknowledgments
+Django REST Framework team
+
+React community
+
+All contributors
+
+📞 Support
+For issues or questions:
+
+Create GitHub issue
+
+Email: [your-email]
+
+🎯 Quick Start Commands
+bash
+# Clone and install
+git clone https://github.com/andugetachew/multi-tenant-saas-frontend.git
+cd multi-tenant-saas-frontend
+npm install
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+🌟 Star History
+If you find this project useful, please star it on GitHub!
+
+Built with React and Django REST Framework 🚀

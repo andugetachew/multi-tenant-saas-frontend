@@ -101,3 +101,22 @@ button:disabled {
 .auth-link a:hover {
     text-decoration: underline;
 }
+
+.success-message {
+    background: #c6f6d5;
+    color: #22543d;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.forgot-link {
+    display: block;
+    text-align: right;
+    margin-top: -10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #667eea;
+    text-decoration: none;
+}

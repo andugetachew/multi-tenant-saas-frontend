@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import CommentSection from '../components/CommentSection';
@@ -20,7 +20,34 @@ const ProjectDetail = () => {
         status: 'pending',
         due_date: '',
     });
+    // ✅ Removed unused 'token' variable
 
+    // Wrap fetchProject in useCallback
+    const fetchProject = useCallback(async () => {
+        try {
+            const response = await api.get(`/projects/${projectId}/`);
+            setProject(response.data);
+        } catch (error) {
+            console.error('Error fetching project:', error);
+        }
+    }, [projectId]);
+
+    // Wrap fetchTasks in useCallback
+    const fetchTasks = useCallback(async () => {
+        try {
+            const response = await api.get(`/projects/tasks/?project_id=${projectId}`);
+            const tasksData = Array.isArray(response.data) ? response.data : (response.data.results || []);
+            setTasks(tasksData);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            setTasks([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [projectId]);
+    //const token = localStorage.getItem('access_token');
+
+    // Now useEffect has proper dependencies
     useEffect(() => {
         fetchProject();
         fetchTasks();
@@ -37,27 +64,7 @@ const ProjectDetail = () => {
         return () => {
             webSocketService.disconnect(`tasks_${projectId}`);
         };
-    }, [projectId]);
-
-    const fetchProject = async () => {
-        try {
-            const response = await api.get(`/projects/${projectId}/`);
-            setProject(response.data);
-        } catch (error) {
-            console.error('Error fetching project:', error);
-        }
-    };
-
-    const fetchTasks = async () => {
-        try {
-            const response = await api.get(`/projects/tasks/?project_id=${projectId}`);
-            setTasks(response.data);
-        } catch (error) {
-            console.error('Error fetching tasks:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [projectId, fetchProject, fetchTasks]); // ✅ Added missing dependencies
 
     const handleTaskSubmit = async (e) => {
         e.preventDefault();
@@ -102,7 +109,6 @@ const ProjectDetail = () => {
     const updateTaskStatus = async (id, newStatus) => {
         try {
             await api.patch(`/projects/tasks/${id}/`, { status: newStatus });
-            // Send WebSocket update for real-time sync
             webSocketService.sendTaskUpdate(projectId, id, newStatus);
         } catch (error) {
             console.error('Error updating status:', error);
@@ -127,7 +133,6 @@ const ProjectDetail = () => {
         return classes[status];
     };
 
-    // Export functions
     const exportProjectsCSV = async () => {
         try {
             const response = await api.get('/projects/export/projects/csv/', {
@@ -184,6 +189,8 @@ const ProjectDetail = () => {
             alert('Authentication failed. Please login again.');
         }
     };
+
+
 
     if (loading) return <div className="loading">Loading...</div>;
 
@@ -289,7 +296,7 @@ const ProjectDetail = () => {
                 </div>
             </div>
 
-            <CommentSection projectId={projectId} />
+            <CommentSection projectId={projectId} token={localStorage.getItem('access_token')} />
 
             {showTaskModal && (
                 <div className="modal">

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './Projects.css';
 import { Link } from 'react-router-dom';
+
 const Projects = () => {
-    const { user } = useAuth();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -15,9 +14,6 @@ const Projects = () => {
         status: 'active',
         tags: '',
     });
-    const exportProjects = () => {
-        window.open(`${api.defaults.baseURL}/projects/export/projects/pdf/`, '_blank');
-    };
 
     useEffect(() => {
         fetchProjects();
@@ -26,9 +22,11 @@ const Projects = () => {
     const fetchProjects = async () => {
         try {
             const response = await api.get('/projects/');
-            setProjects(response.data);
+            const projectsData = response.data?.results || [];
+            setProjects(projectsData);
         } catch (error) {
             console.error('Error fetching projects:', error);
+            setProjects([]);
         } finally {
             setLoading(false);
         }
@@ -48,6 +46,7 @@ const Projects = () => {
             fetchProjects();
         } catch (error) {
             console.error('Error saving project:', error);
+            alert('Failed to save project. Please try again.');
         }
     };
 
@@ -63,17 +62,22 @@ const Projects = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this project?')) {
+        if (window.confirm('Delete this project?')) {
             try {
                 await api.delete(`/projects/${id}/`);
                 fetchProjects();
             } catch (error) {
                 console.error('Error deleting project:', error);
+                alert('Failed to delete project.');
             }
         }
     };
 
-    if (loading) return <div className="loading">Loading...</div>;
+    if (loading) {
+        return <div className="loading">Loading projects...</div>;
+    }
+
+
 
     return (
         <div className="projects-container">
@@ -85,36 +89,42 @@ const Projects = () => {
             </div>
 
             <div className="projects-grid">
-                {projects.map((project) => (
-                    <div key={project.id} className="project-card">
-                        <div className="project-header">
-                            <h3>{project.name}</h3>
-                            <div className="project-actions">
-                                <button className="icon-btn edit" onClick={() => handleEdit(project)}>
-                                    ✏️
-                                </button>
-                                <button className="icon-btn delete" onClick={() => handleDelete(project.id)}>
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                        <p className="project-desc">{project.description || 'No description'}</p>
-                        <div className="project-meta">
-                            <span className={`status ${project.status}`}>{project.status}</span>
-                            <span className="task-count">{project.task_count || 0} tasks</span>
-                        </div>
-                        <Link to={`/projects/${project.id}`} className="view-tasks-btn">
-                            View Details
-                        </Link>
-                        {project.tags && (
-                            <div className="project-tags">
-                                {project.tags.split(',').map((tag, i) => (
-                                    <span key={i} className="tag">{tag.trim()}</span>
-                                ))}
-                            </div>
-                        )}
+                {!projects || projects.length === 0 ? (
+                    <div className="no-projects">
+                        <p>No projects yet. Create your first project!</p>
                     </div>
-                ))}
+                ) : (
+                    projects.map((project) => (
+                        <div key={project.id} className="project-card">
+                            <div className="project-header">
+                                <h3>{project.name}</h3>
+                                <div className="project-actions">
+                                    <button className="icon-btn edit" onClick={() => handleEdit(project)}>
+                                        ✏️
+                                    </button>
+                                    <button className="icon-btn delete" onClick={() => handleDelete(project.id)}>
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="project-desc">{project.description || 'No description'}</p>
+                            <div className="project-meta">
+                                <span className={`status ${project.status}`}>{project.status}</span>
+                                <span className="task-count">{project.task_count || 0} tasks</span>
+                            </div>
+                            {project.tags && (
+                                <div className="project-tags">
+                                    {project.tags.split(',').map((tag, i) => (
+                                        <span key={i} className="tag">{tag.trim()}</span>
+                                    ))}
+                                </div>
+                            )}
+                            <Link to={`/projects/${project.id}`} className="view-details-btn">
+                                View Details
+                            </Link>
+                        </div>
+                    ))
+                )}
             </div>
 
             {showModal && (
@@ -151,7 +161,7 @@ const Projects = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Tags (comma separated)</label>
+                                <label>Tags</label>
                                 <input
                                     type="text"
                                     value={formData.tags}

@@ -36,7 +36,7 @@ const Register = () => {
         if (result.success) {
             navigate('/dashboard');
         } else {
-            setError(result.error);
+            setError(JSON.stringify(result.error));
         }
         setLoading(false);
     };

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
-
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -15,6 +14,7 @@ const Login = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
+
 
         const result = await login(email, password);
 
@@ -38,11 +38,11 @@ const Login = () => {
                     <div className="form-group">
                         <label>Email</label>
                         <input
-                            type="email"
+                            type="text"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="admin@gmail.com"
+                            placeholder="Email"
                         />
                     </div>
 
@@ -56,6 +56,8 @@ const Login = () => {
                             placeholder="••••••••"
                         />
                     </div>
+
+                    <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
 
                     <button type="submit" disabled={loading}>
                         {loading ? 'Logging in...' : 'Login'}

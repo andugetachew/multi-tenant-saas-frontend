@@ -1,207 +1,265 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
-import webSocketService from '../services/websocket';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import './CommentSection.css';
 
-const CommentSection = ({ projectId }) => {
-    const { user } = useAuth();
+const API_URL = 'http://localhost:8000/api';
+
+const CommentSection = ({ projectId, token }) => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [typing, setTyping] = useState(false);
-    const [typingUsers, setTypingUsers] = useState([]);
-    const typingTimeoutRef = useRef(null);
-    const commentsEndRef = useRef(null);
+    const [error, setError] = useState(null);
+    const [showReply, setShowReply] = useState({});
 
-    useEffect(() => {
-        fetchComments();
+    // =========================
+    // FETCH COMMENTS
+    // =========================
+    const fetchComments = useCallback(async () => {
+        console.log("Fetching comments:", { projectId, token: !!token });
 
-        // Connect WebSocket for real-time comments
-        webSocketService.connectComments(projectId, (newCommentData) => {
-            setComments(prev => [...prev, {
-                ...newCommentData,
-                created_at: new Date().toISOString()
-            }]);
-            scrollToBottom();
-        });
+        if (!projectId || !token) {
+            setError("Missing project or login");
+            setLoading(false);
+            return;
+        }
 
-        return () => {
-            webSocketService.disconnect(`comments_${projectId}`);
-        };
-    }, [projectId]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [comments]);
-
-    const scrollToBottom = () => {
-        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const fetchComments = async () => {
         try {
-            const response = await api.get(`/comments/?project_id=${projectId}`);
-            setComments(response.data);
-        } catch (error) {
-            console.error('Error fetching comments:', error);
+            setLoading(true);
+            setError(null);
+
+            const response = await axios.get(
+                `${API_URL}/comments/?project_id=${projectId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            console.log("Comments response:", response.data);
+
+            const commentsArray = Array.isArray(response.data)
+                ? response.data
+                : response.data?.results || [];
+
+            setComments(commentsArray);
+
+        } catch (err) {
+            console.error("Fetch error:", err);
+            setError("Failed to load comments");
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId, token]);
 
-    const handleTyping = () => {
-        if (!typing) {
-            setTyping(true);
-            // Emit typing event via WebSocket
-            const ws = webSocketService.sockets[`comments_${projectId}`];
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'typing',
-                    user: user?.email
-                }));
-            }
+    // =========================
+    // INIT LOAD
+    // =========================
+    useEffect(() => {
+        if (projectId && token) {
+            fetchComments();
+        } else {
+            setLoading(false);
+            setError("Please login to view comments");
         }
+    }, [projectId, token, fetchComments]);
 
-        clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = setTimeout(() => {
-            setTyping(false);
-            // Emit stopped typing event
-            const ws = webSocketService.sockets[`comments_${projectId}`];
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'stop_typing',
-                    user: user?.email
-                }));
-            }
-        }, 1000);
-    };
-
-    const handleSubmit = async (e) => {
+    // =========================
+    // POST COMMENT
+    // =========================
+    const handleSubmitComment = async (e) => {
         e.preventDefault();
+
         if (!newComment.trim()) return;
+        if (!token) {
+            setError("You must be logged in to comment");
+            return;
+        }
 
-        setSubmitting(true);
         try {
-            const response = await api.post('/comments/', {
-                project: projectId,
-                content: newComment,
-            });
+            await axios.post(
+                `${API_URL}/comments/`,
+                {
+                    project: parseInt(projectId),
+                    content: newComment.trim(),
+                    parent: null,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
 
-            // The WebSocket will broadcast the new comment to all users
             setNewComment('');
-        } catch (error) {
-            console.error('Error posting comment:', error);
-            alert('Failed to post comment. Please try again.');
-        } finally {
-            setSubmitting(false);
+            fetchComments();
+
+        } catch (err) {
+            console.error("Post comment error:", err);
+            setError("Failed to post comment");
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+    // =========================
+    // COMMENT ITEM (RECURSIVE)
+    // =========================
+    const CommentItem = ({ comment, depth = 0 }) => {
+        const [replyText, setReplyText] = useState('');
 
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins} min ago`;
-        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-        return date.toLocaleDateString();
-    };
+        const handleReplySubmit = async () => {
+            if (!replyText.trim()) {
+                setError("Reply cannot be empty");
+                return;
+            }
 
-    if (loading) {
+            if (!token) {
+                setError("You must be logged in to reply");
+                return;
+            }
+
+            try {
+                await axios.post(
+                    `${API_URL}/comments/`,
+                    {
+                        project: parseInt(projectId),
+                        content: replyText.trim(),
+                        parent: comment.id,
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                setReplyText('');
+                setShowReply(prev => ({ ...prev, [comment.id]: false }));
+                fetchComments();
+
+            } catch (err) {
+                console.error("Reply error:", err);
+                setError("Failed to post reply");
+            }
+        };
+
         return (
-            <div className="comments-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading comments...</p>
+            <div className={`comment-card depth-${Math.min(depth, 3)}`}>
+                <div className="comment-header">
+                    <strong>{comment.user_email || 'Unknown User'}</strong>
+                    <span className="comment-date">
+                        {comment.created_at
+                            ? new Date(comment.created_at).toLocaleString()
+                            : ''}
+                    </span>
+                </div>
+
+                <p className="comment-content">{comment.content}</p>
+
+                <button
+                    onClick={() =>
+                        setShowReply(prev => ({
+                            ...prev,
+                            [comment.id]: !prev[comment.id],
+                        }))
+                    }
+                >
+                    Reply
+                </button>
+
+                {showReply[comment.id] && (
+                    <div className="reply-form">
+                        <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write a reply..."
+                            rows="2"
+                        />
+
+                        <div className="reply-actions">
+                            <button
+                                onClick={() =>
+                                    setShowReply(prev => ({
+                                        ...prev,
+                                        [comment.id]: false,
+                                    }))
+                                }
+                            >
+                                Cancel
+                            </button>
+
+                            <button className="btn-primary" onClick={handleReplySubmit}>
+                                Submit Reply
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {comment.replies?.length > 0 && (
+                    <div className="replies-container">
+                        {comment.replies.map((reply) => (
+                            <CommentItem
+                                key={reply.id}
+                                comment={reply}
+                                depth={depth + 1}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         );
-    }
+    };
+
+    // =========================
+    // UI STATES
+    // =========================
+    if (loading) return <div className="comments-loading">Loading comments...</div>;
+
+    if (error)
+        return <div className="comments-error" style={{ color: 'red', padding: 20 }}>{error}</div>;
 
     return (
         <div className="comment-section">
-            <div className="comment-header">
-                <h3>
-                    💬 Comments
-                    <span className="comment-count">({comments.length})</span>
-                </h3>
-            </div>
+            <h3>Comments ({comments.length})</h3>
 
-            <form onSubmit={handleSubmit} className="comment-form">
-                <div className="comment-input-wrapper">
-                    <img
-                        src={`https://ui-avatars.com/api/?name=${user?.first_name || user?.email}&background=667eea&color=fff`}
-                        alt="Avatar"
-                        className="comment-avatar"
-                    />
-                    <textarea
-                        value={newComment}
-                        onChange={(e) => {
-                            setNewComment(e.target.value);
-                            handleTyping();
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit(e);
-                            }
-                        }}
-                        placeholder="Write a comment... (Press Enter to send, Shift+Enter for new line)"
-                        rows="3"
-                        disabled={submitting}
-                    />
+            {!token && (
+                <div className="login-warning">
+                    Please login to post comments
                 </div>
-                <div className="comment-form-actions">
-                    {typing && (
-                        <span className="typing-indicator">Typing...</span>
-                    )}
-                    <button type="submit" className="btn-primary" disabled={submitting || !newComment.trim()}>
-                        {submitting ? 'Sending...' : 'Post Comment'}
-                    </button>
-                </div>
+            )}
+
+            {/* COMMENT FORM */}
+            <form onSubmit={handleSubmitComment} className="comment-form">
+                <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    rows="3"
+                    required
+                    disabled={!token}
+                />
+                <button type="submit" disabled={!token}>
+                    Post Comment
+                </button>
             </form>
 
+            {/* COMMENTS LIST */}
             <div className="comments-list">
                 {comments.length === 0 ? (
                     <div className="no-comments">
-                        <div className="no-comments-icon">💬</div>
-                        <h4>No comments yet</h4>
-                        <p>Be the first to comment on this project!</p>
+                        No comments yet. Be the first to comment!
                     </div>
                 ) : (
                     comments.map((comment) => (
-                        <div key={comment.id} className="comment-card">
-                            <div className="comment-avatar-wrapper">
-                                <img
-                                    src={`https://ui-avatars.com/api/?name=${comment.user_email}&background=667eea&color=fff`}
-                                    alt={comment.user_email}
-                                    className="comment-avatar-small"
-                                />
-                            </div>
-                            <div className="comment-body">
-                                <div className="comment-header-info">
-                                    <strong className="comment-author">{comment.user_email}</strong>
-                                    <span className="comment-date">{formatDate(comment.created_at)}</span>
-                                </div>
-                                <p className="comment-content">{comment.content}</p>
-                                <div className="comment-actions">
-                                    <button className="comment-action-btn" onClick={() => {/* Reply feature */ }}>
-                                        👍 Like
-                                    </button>
-                                    <button className="comment-action-btn" onClick={() => {/* Reply feature */ }}>
-                                        💬 Reply
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <CommentItem
+                            key={comment.id}
+                            comment={comment}
+                            depth={0}
+                        />
                     ))
                 )}
-                <div ref={commentsEndRef} />
             </div>
         </div>
     );

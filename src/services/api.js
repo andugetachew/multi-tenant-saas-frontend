@@ -17,9 +17,8 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
-        // Add organization ID header
         const orgId = localStorage.getItem('organization_id');
-        if (orgId) {
+        if (orgId && config.url !== '/auth/login/' && config.url !== '/auth/register/') {
             config.headers['X-Organization-ID'] = orgId;
         }
 
